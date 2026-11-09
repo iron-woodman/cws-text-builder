@@ -19,7 +19,7 @@ header{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 header h1{font-size:18px;margin:0 auto 0 0}
 .btn{border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 10px;border-radius:4px;font:inherit;cursor:pointer}
 .btn.primary{background:var(--head);color:var(--head-fg);border-color:var(--head)}
-.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
+.cols{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.38fr) minmax(0,.9fr);gap:12px;align-items:start}
 @media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr)}}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px;display:grid;gap:8px;min-width:0}
 .panel h2{font-size:14px;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -58,15 +58,13 @@ mark{color:inherit;border-radius:2px}
 .k-hl{background:color-mix(in srgb,var(--warn) 45%,transparent)}
 .legend mark{padding:0 3px}
 .ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
-.bottom{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px}
-@media (max-width:900px){.bottom{grid-template-columns:minmax(0,1fr)}}
+.side{display:grid;gap:12px;min-width:0}
 .checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px;margin:0;padding:0;list-style:none}
 .checks li{display:flex;gap:6px}
 .note{font-size:12px;color:var(--muted);margin:0}
 th{white-space:normal}
 td.key{white-space:normal;overflow-wrap:anywhere}
 td.key [data-f]{display:block;min-height:1.3em;outline:none}
-.bottom{align-items:start}
 .panel{align-content:start}
 td.num input{width:4.5em;text-align:right}
 td.idx,td.used{cursor:pointer;user-select:none}
@@ -89,11 +87,15 @@ select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--
   <button class="btn" data-import="main">Импорт CSV → Main</button>
   <button class="btn" data-import="extra">Импорт CSV → Extra</button>
   <span id="clearBox"><button class="btn" id="clear">Очистить</button></span>
+  <button class="btn" id="open">Открыть проект</button>
+  <button class="btn" id="saveProj">Сохранить проект</button>
   <button class="btn primary" id="save">Сохранить .md</button>
   <input type="file" id="file" accept=".csv,.tsv,.txt" hidden>
+  <input type="file" id="projFile" accept=".json" hidden>
 </header>
 <p class="err" id="err"></p>
 <div class="cols">
+<div class="side">
   <section class="panel">
     <div class="namebox">
       <label for="nameKey">Главный ключ (из названия)</label>
@@ -111,22 +113,23 @@ select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--
     <button class="btn add" data-add="main">+ добавить строку</button>
   </section>
   <section class="panel">
-    <div class="field"><div class="lbl"><span>Название</span><span id="nameLen"></span></div><div class="ed"><div class="bd" id="nameBd"></div><textarea id="name" rows="1" spellcheck="false"></textarea></div></div>
-    <div class="field"><div class="lbl"><span>Короткое описание</span><span id="shortLen"></span></div><div class="ed"><div class="bd" id="shortBd"></div><textarea id="short" rows="1" spellcheck="false"></textarea></div></div>
-    <div class="field"><div class="lbl"><span>Полное описание</span><span id="fullLen"></span></div><div class="ed"><div class="bd" id="fullBd"></div><textarea id="full" rows="1" spellcheck="false"></textarea></div></div>
-    <p class="note legend">Подсветка: <mark class="k-main">Main</mark> <mark class="k-extra">Extra</mark> <mark class="k-main k-nk">главный ключ</mark> <mark class="k-hl">выбранный — клик по # или Used</mark></p>
-  </section>
-  <section class="panel">
     <h2>Extra keywords <small id="extraSum"></small></h2>
     <div class="tw"><table><thead><tr><th>#</th><th>Extra Keyword</th><th>Vol</th><th>KD</th><th>Used</th><th></th></tr></thead><tbody id="extra"></tbody></table></div>
     <button class="btn add" data-add="extra">+ добавить строку</button>
   </section>
 </div>
+  <section class="panel">
+    <div class="field"><div class="lbl"><span>Название</span><span id="nameLen"></span></div><div class="ed"><div class="bd" id="nameBd"></div><textarea id="name" rows="1" spellcheck="false"></textarea></div></div>
+    <div class="field"><div class="lbl"><span>Короткое описание</span><span id="shortLen"></span></div><div class="ed"><div class="bd" id="shortBd"></div><textarea id="short" rows="1" spellcheck="false"></textarea></div></div>
+    <div class="field"><div class="lbl"><span>Полное описание</span><span id="fullLen"></span></div><div class="ed"><div class="bd" id="fullBd"></div><textarea id="full" rows="1" spellcheck="false"></textarea></div></div>
+    <p class="note legend">Подсветка: <mark class="k-main">Main</mark> <mark class="k-extra">Extra</mark> <mark class="k-main k-nk">главный ключ</mark> <mark class="k-hl">выбранный — клик по # или Used</mark></p>
+  </section>
+  <section class="panel"><h2>Плотность слов <small id="dSum"></small></h2>
+    <div class="tw"><table class="dens"><thead><tr><th>Слово</th><th>Плотность</th><th>Кол-во</th></tr></thead><tbody id="dens"></tbody></table></div></section>
+</div>
 <div class="bottom">
   <section class="panel"><h2>Проверки по правилам</h2><ul class="checks" id="checks"></ul>
     <p class="note">Ключи в коротком — только полные совпадения; частичные проверяйте глазами.</p></section>
-  <section class="panel"><h2>Плотность слов <small id="dSum"></small></h2>
-    <div class="tw"><table class="dens"><thead><tr><th>Слово</th><th>Плотность</th><th>Кол-во</th></tr></thead><tbody id="dens"></tbody></table></div></section>
 </div>
 </div>
 <script id="core">
@@ -336,11 +339,9 @@ function toMarkdown(st) {
 const LS = 'cws-text-builder-v1';
 const $ = id => document.getElementById(id);
 const empty = () => ({ name: '', short: '', full: '', nameKey: '', nameKeyManual: false, mainWord: '', main: [], extra: [] });
+const valid = o => o && Array.isArray(o.main) && Array.isArray(o.extra) ? { ...empty(), ...o } : null;
 let state = empty();
-try {
-  const saved = JSON.parse(localStorage.getItem(LS));
-  if (saved && Array.isArray(saved.main) && Array.isArray(saved.extra)) state = { ...empty(), ...saved };
-} catch (e) { /* corrupt storage → empty state */ }
+try { state = valid(JSON.parse(localStorage.getItem(LS))) || state; } catch (e) { /* corrupt storage → empty state */ }
 const highlight = new Set();
 
 function renderTable(which) {
@@ -472,18 +473,34 @@ $('clear').onclick = function ask() {
   const back = () => { $('clearBox').innerHTML = '<button class="btn" id="clear">Очистить</button>'; $('clear').onclick = ask; };
   $('no').onclick = back;
   $('yes').onclick = () => {
-    state = empty(); highlight.clear();
-    for (const id of FIELDS) { $(id).value = ''; grow(id); }
-    renderTable('main'); renderTable('extra'); recalc(); back();
+    load(empty()); back();
   };
 };
 
-$('save').onclick = () => {
+function load(next) {
+  state = next; highlight.clear();
+  for (const id of FIELDS) { $(id).value = state[id]; grow(id); }
+  renderTable('main'); renderTable('extra'); recalc();
+}
+function download(text, type, name) {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['﻿' + toMarkdown(state)], { type: 'text/markdown;charset=utf-8' }));
-  a.download = slug(state.name) + '-listing.md';
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$('save').onclick = () => download('\ufeff' + toMarkdown(state), 'text/markdown;charset=utf-8', slug(state.name) + '-listing.md');
+$('saveProj').onclick = () => download(JSON.stringify(state, null, 2), 'application/json', slug(state.name) + '-project.json');
+$('open').onclick = () => $('projFile').click();
+$('projFile').onchange = () => {
+  const f = $('projFile').files[0];
+  if (!f) return;
+  f.text().then(t => {
+    let next = null;
+    try { next = valid(JSON.parse(t)); } catch (e) { /* not JSON */ }
+    if (next) load(next); else showError('Это не файл проекта CWS Text Builder');
+    $('projFile').value = '';
+  });
 };
 
 renderTable('main'); renderTable('extra'); FIELDS.forEach(grow); recalc();
