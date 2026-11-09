@@ -89,6 +89,7 @@ select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--
   <span id="clearBox"><button class="btn" id="clear">Очистить</button></span>
   <button class="btn" id="open">Открыть проект</button>
   <button class="btn" id="saveProj">Сохранить проект</button>
+  <button class="btn" id="copyDoc">Копировать для Google Docs</button>
   <button class="btn primary" id="save">Сохранить .md</button>
   <input type="file" id="file" accept=".csv,.tsv,.txt" hidden>
   <input type="file" id="projFile" accept=".json" hidden>
@@ -334,6 +335,26 @@ function toMarkdown(st) {
     ...issues.map(c => `- ${c.status === 'bad' ? '✕' : '▲'} ${c.text}`), '',
   ].join('\n');
 }
+function toReportHTML(st) {
+  const td = v => `<td>${esc(String(v ?? ''))}</td>`;
+  const tr = cells => `<tr>${cells.map(td).join('')}</tr>`;
+  const table = (head, rows) => `<table border="1" cellpadding="4" style="border-collapse:collapse">`
+    + `<tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr>${rows.join('')}</table>`;
+  const keys = (title, rows) => `<h2>${title} keywords</h2>` + table(['#', title + ' Keyword', 'Volume', 'KD', 'Times used'],
+    [...rows.map((r, i) => tr([i + 1, r.key, r.volume, r.kd, keyUsage(st, r.key).total])), tr(['', 'Итого', '', '', tableTotals(st, rows).sum])]);
+  const text = (title, t) => `<h2>${title}</h2>` + tidy(t).split('\n').map(l => `<p>${esc(l) || '&nbsp;'}</p>`).join('');
+  const ns = nameKeyStats(st), d = density(listing(st));
+  const color = r => r.stop ? 'color:#888' : r.pct >= 0.03 ? 'background:#f4c7c3' : r.pct >= 0.02 ? 'background:#fce8b2' : '';
+  const issues = runChecks(st).filter(c => c.status !== 'ok');
+  return `<h1>${esc(tidy(st.name) || 'Без названия')}</h1>` + keys('Main', st.main) + keys('Extra', st.extra)
+    + text('Название', st.name) + text('Короткое описание', st.short) + text('Полное описание', st.full)
+    + '<h2>Отчёт по спамности</h2>'
+    + `<p>Главный ключ «${esc(st.nameKey)}»: всего ${ns.total} (полн. ${ns.totalFull}) · отдельно ${ns.standalone} · lowercase ${Math.round(ns.lowercase * 100)}%</p>`
+    + `<p>Слов ${d.words} · длины: название ${[...tidy(st.name)].length}, короткое ${[...tidy(st.short)].length}, полное ${[...tidy(st.full)].length}</p>`
+    + table(['Слово', 'Плотность', 'Кол-во'], d.rows.slice(0, 30).map(r =>
+      `<tr style="${color(r)}"><td>${esc(r.word)}</td><td>${(r.pct * 100).toFixed(2)}%</td><td>${r.count}</td></tr>`))
+    + (issues.length ? '<ul>' + issues.map(c => `<li>${c.status === 'bad' ? '✕' : '▲'} ${esc(c.text)}</li>`).join('') + '</ul>' : '<p>✓ Все проверки пройдены</p>');
+}
 </script>
 <script>
 const LS = 'cws-text-builder-v1';
@@ -490,6 +511,13 @@ function download(text, type, name) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 $('save').onclick = () => download('\ufeff' + toMarkdown(state), 'text/markdown;charset=utf-8', slug(state.name) + '-listing.md');
+$('copyDoc').onclick = async () => {
+  const html = toReportHTML(state);
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([toMarkdown(state)], { type: 'text/plain' }) })]);
+    showError('Отчёт скопирован — вставьте Ctrl+V в Google Docs');
+  } catch (e) { showError('Браузер не дал доступ к буферу: ' + e.message); }
+};
 $('saveProj').onclick = () => download(JSON.stringify(state, null, 2), 'application/json', slug(state.name) + '-project.json');
 $('open').onclick = () => $('projFile').click();
 $('projFile').onchange = () => {
