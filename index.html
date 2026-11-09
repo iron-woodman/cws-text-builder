@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CWS Text Builder</title>
+<style>
+/* Main | тексты | Extra, снизу Проверки | Плотность */
+:root{
+  --bg:#f3f5f4;--panel:#ffffff;--fg:#1d2422;--muted:#66726e;--line:#d9e0dd;
+  --head:#2f6b55;--head-fg:#fff;--key:#2f8a3e;--ok:#2f8a3e;--warn:#b58300;--bad:#c23b2e;--hl:#fff6d6;--extra:#2f6fb5;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151a19;--panel:#1e2523;--fg:#e4ebe8;--muted:#93a19c;--line:#33403c;--head:#2a5c4a;--key:#6cc77a;--ok:#6cc77a;--warn:#e0b341;--bad:#ef7a6e;--hl:#3a3420;--extra:#79a9e8;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151a19;--panel:#1e2523;--fg:#e4ebe8;--muted:#93a19c;--line:#33403c;--head:#2a5c4a;--key:#6cc77a;--ok:#6cc77a;--warn:#e0b341;--bad:#ef7a6e;--hl:#3a3420;--extra:#79a9e8;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:13px}
+.wrap{padding-block:14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:12px}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+header h1{font-size:18px;margin:0 auto 0 0}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 10px;border-radius:4px;font:inherit;cursor:pointer}
+.btn.primary{background:var(--head);color:var(--head-fg);border-color:var(--head)}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:14px;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.panel h2 small{font-weight:400;color:var(--muted);font-size:12px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{background:var(--head);color:var(--head-fg);font-weight:500;text-align:left;padding:5px 6px;white-space:nowrap}
+td{border-bottom:1px solid var(--line);padding:4px 6px}
+td.n{text-align:right}
+tr.namekey td{color:var(--key);font-weight:600}
+tr.zero td:last-child{color:var(--muted)}
+td input{width:100%;border:0;background:transparent;color:inherit;font:inherit}
+.chip{display:inline-block;min-width:22px;text-align:center;border-radius:3px;padding:0 4px;font-weight:600}
+.c-ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.c-zero{color:var(--muted)}
+.namebox{border:1px dashed var(--key);border-radius:6px;padding:8px;display:grid;gap:6px}
+.namebox label{font-size:12px;color:var(--muted)}
+.namebox input{font:600 14px var(--mono);color:var(--key);border:1px solid var(--line);background:var(--bg);padding:5px 6px;border-radius:4px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.stat{display:grid;gap:2px}
+.stat b{font-size:16px;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--muted)}
+.field{display:grid;gap:4px}
+.field .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.field textarea,.field input{font:13px/1.5 var(--sans);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px;width:100%;box-sizing:border-box}
+.field textarea{resize:vertical}
+.ed{position:relative}
+.ed .bd,.ed textarea{font:13px/1.5 var(--sans);padding:6px 8px;border:1px solid var(--line);border-radius:4px;box-sizing:border-box;width:100%;margin:0;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;tab-size:4;letter-spacing:normal}
+.ed .bd{position:absolute;inset:0;color:transparent;background:var(--bg);border-color:transparent;overflow:hidden;pointer-events:none}
+.ed textarea{position:relative;display:block;background:transparent;color:var(--fg);caret-color:var(--fg);resize:none;overflow:hidden}
+mark{color:inherit;border-radius:2px}
+.bd mark{color:transparent}
+.k-main{background:color-mix(in srgb,var(--ok) 20%,transparent)}
+.k-extra{background:color-mix(in srgb,var(--extra) 22%,transparent)}
+.k-nk{background:color-mix(in srgb,var(--ok) 38%,transparent);box-shadow:inset 0 -2px var(--key)}
+.k-hl{background:color-mix(in srgb,var(--warn) 45%,transparent)}
+.legend mark{padding:0 3px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.bottom{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px}
+@media (max-width:900px){.bottom{grid-template-columns:minmax(0,1fr)}}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px;margin:0;padding:0;list-style:none}
+.checks li{display:flex;gap:6px}
+.note{font-size:12px;color:var(--muted);margin:0}
+th{white-space:normal}
+td.key{white-space:normal;overflow-wrap:anywhere}
+td.key [data-f]{display:block;min-height:1.3em;outline:none}
+.bottom{align-items:start}
+.panel{align-content:start}
+td.num input{width:4.5em;text-align:right}
+td.idx,td.used{cursor:pointer;user-select:none}
+tr.hl td{background:var(--hl)}
+tr.zero td{color:var(--muted)}
+td button{border:0;background:none;color:var(--muted);cursor:pointer;font:inherit}
+.add{justify-self:start}
+.err{color:var(--bad);font-weight:600;min-height:1em;margin:0}
+.dens td.n{width:5em}
+tr.d-stop td{color:var(--muted)}
+tr.d-warn td{color:var(--warn);font-weight:600}
+tr.d-bad td{color:var(--bad);font-weight:600}
+select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>CWS Text Builder</h1>
+  <button class="btn" data-import="main">Импорт CSV → Main</button>
+  <button class="btn" data-import="extra">Импорт CSV → Extra</button>
+  <span id="clearBox"><button class="btn" id="clear">Очистить</button></span>
+  <button class="btn primary" id="save">Сохранить .md</button>
+  <input type="file" id="file" accept=".csv,.tsv,.txt" hidden>
+</header>
+<p class="err" id="err"></p>
+<div class="cols">
+  <section class="panel">
+    <div class="namebox">
+      <label for="nameKey">Главный ключ (из названия)</label>
+      <input id="nameKey" spellcheck="false">
+      <div class="stats">
+        <div class="stat"><b id="nkTotal">0</b><span>всего · полн.</span></div>
+        <div class="stat"><b id="nkStand">0</b><span>отдельно (7–10)</span></div>
+        <div class="stat"><b id="nkInside">0</b><span>внутри длинных</span></div>
+        <div class="stat"><b id="nkLower">0%</b><span>lowercase (~50%)</span></div>
+      </div>
+      <label>Главное слово для лимита повторов в коротком: <select id="mainWord"></select></label>
+    </div>
+    <h2>Main keywords <small id="mainSum"></small></h2>
+    <div class="tw"><table><thead><tr><th>#</th><th>Main Keyword</th><th>Vol</th><th>KD</th><th>Used</th><th></th></tr></thead><tbody id="main"></tbody></table></div>
+    <button class="btn add" data-add="main">+ добавить строку</button>
+  </section>
+  <section class="panel">
+    <div class="field"><div class="lbl"><span>Название</span><span id="nameLen"></span></div><div class="ed"><div class="bd" id="nameBd"></div><textarea id="name" rows="1" spellcheck="false"></textarea></div></div>
+    <div class="field"><div class="lbl"><span>Короткое описание</span><span id="shortLen"></span></div><div class="ed"><div class="bd" id="shortBd"></div><textarea id="short" rows="1" spellcheck="false"></textarea></div></div>
+    <div class="field"><div class="lbl"><span>Полное описание</span><span id="fullLen"></span></div><div class="ed"><div class="bd" id="fullBd"></div><textarea id="full" rows="1" spellcheck="false"></textarea></div></div>
+    <p class="note legend">Подсветка: <mark class="k-main">Main</mark> <mark class="k-extra">Extra</mark> <mark class="k-main k-nk">главный ключ</mark> <mark class="k-hl">выбранный — клик по # или Used</mark></p>
+  </section>
+  <section class="panel">
+    <h2>Extra keywords <small id="extraSum"></small></h2>
+    <div class="tw"><table><thead><tr><th>#</th><th>Extra Keyword</th><th>Vol</th><th>KD</th><th>Used</th><th></th></tr></thead><tbody id="extra"></tbody></table></div>
+    <button class="btn add" data-add="extra">+ добавить строку</button>
+  </section>
+</div>
+<div class="bottom">
+  <section class="panel"><h2>Проверки по правилам</h2><ul class="checks" id="checks"></ul>
+    <p class="note">Ключи в коротком — только полные совпадения; частичные проверяйте глазами.</p></section>
+  <section class="panel"><h2>Плотность слов <small id="dSum"></small></h2>
+    <div class="tw"><table class="dens"><thead><tr><th>Слово</th><th>Плотность</th><th>Кол-во</th></tr></thead><tbody id="dens"></tbody></table></div></section>
+</div>
+</div>
+<script id="core">
+function normalize(text) {
+  return String(text || '').replace(/\r\n?/g, '\n').replace(/[‘’]/g, "'");
+}
+function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function findKey(text, key) {
+  key = normalize(key).trim().toLowerCase();
+  if (!key) return [];
+  const re = new RegExp('(?<![a-z])' + escapeRe(key) + '(?![a-z])', 'gi');
+  return [...normalize(text).matchAll(re)].map(m => [m.index, m.index + m[0].length]);
+}
+function countKey(text, key) { return findKey(text, key).length; }
+function listing(st) { return [st.name, st.short, st.full].join('\n'); }
+function keyUsage(st, key) {
+  return { total: countKey(listing(st), key), name: countKey(st.name, key),
+           short: countKey(st.short, key), full: countKey(st.full, key) };
+}
+function nameKeyStats(st) {
+  const nk = normalize(st.nameKey).trim().toLowerCase();
+  const full = normalize(st.full);
+  const hits = findKey(full, nk);
+  const longer = [...st.main, ...st.extra].map(r => normalize(r.key).trim().toLowerCase())
+    .filter(k => k.length > nk.length && k.includes(nk));
+  const spans = longer.flatMap(k => findKey(full, k));
+  const inside = nk ? hits.filter(([a, b]) => spans.some(([x, y]) => x <= a && b <= y)).length : 0;
+  const lower = hits.filter(([a, b]) => { const t = full.slice(a, b); return t === t.toLowerCase(); }).length;
+  return { total: countKey(listing(st), nk), totalFull: hits.length, standalone: hits.length - inside,
+           inside, lowercase: hits.length ? lower / hits.length : 0 };
+}
+function tableTotals(st, rows) {
+  const u = rows.map(r => keyUsage(st, r.key));
+  return { used: u.filter(x => x.total > 0).length, rows: rows.length,
+           sum: u.reduce((a, x) => a + x.total, 0), sumFull: u.reduce((a, x) => a + x.full, 0) };
+}
+var STOPWORDS = new Set(('the a an and or but to in of for on at by with from as into about you your yours it its ' +
+  'is are was be been this that these those so no not all one can do does if then than there here what when how ' +
+  'who which we our they their them i my me will just only also very more most each any every up out over').split(' '));
+function lemma(w) { return w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w; }
+function density(text) {
+  const words = (normalize(text).toLowerCase().match(/[a-z0-9']+/g) || []).map(lemma);
+  const counts = new Map();
+  words.forEach(w => counts.set(w, (counts.get(w) || 0) + 1));
+  const rows = [...counts].map(([word, count]) => {
+    const pct = count / words.length, stop = STOPWORDS.has(word) || /^\d+$/.test(word);
+    return { word, count, pct, stop, level: stop ? '' : pct >= 0.03 ? 'bad' : pct >= 0.02 ? 'warn' : '' };
+  }).sort((a, b) => b.count - a.count || a.word.localeCompare(b.word));
+  return { words: words.length, rows };
+}
+function blocks(full) { return normalize(full).split(/\n\s*\n/).filter(b => b.trim()); }
+function lineMarker(line) {
+  line = line.trim();
+  if (/^\d+\./.test(line)) return '1.';
+  if (/^(\d️?⃣|\u{1F51F}|[①-⑳])/u.test(line)) return '1️⃣';
+  if (/^(Q|A):/.test(line)) return 'Q:';
+  if (/^(❓|💡)/u.test(line)) return '❓';
+  const ch = (line.match(/^\p{Extended_Pictographic}|^[-•▸➤◆♦]/u) || [])[0];
+  return ch || null;
+}
+function listType(block) {
+  const marks = normalize(block).split('\n').filter(l => l.trim()).map(lineMarker);
+  if (marks.length < 2 || marks.filter(Boolean).length < marks.length - 1) return null;
+  const freq = {};
+  marks.filter(Boolean).forEach(m => freq[m] = (freq[m] || 0) + 1);
+  const [top, n] = Object.entries(freq).sort((a, b) => b[1] - a[1])[0] || [];
+  return n >= 2 ? top : null; // ponytail: heading + 1 line is not a list
+}
+function runChecks(st) {
+  const out = [], add = (id, status, text) => out.push({ id, status, text });
+  const nk = normalize(st.nameKey).trim().toLowerCase();
+  const short = normalize(st.short).trim(), full = normalize(st.full).trim();
+  const len = t => [...t].length;
+  const range = (v, lo, hi) => v >= lo && v <= hi ? 'ok' : 'warn';
+
+  add('short-len', len(short) <= 132 ? 'ok' : 'bad', `Короткое: ${len(short)}/132 символов`);
+  const nkShort = countKey(short, nk), first = (findKey(short, nk)[0] || [])[0] === 0;
+  add('short-namekey', nkShort === 1 && !first ? 'ok' : 'bad',
+    `Главный ключ в коротком: ${nkShort} раз${first ? ', стоит первым словом' : ''} (нужно 1, не первым)`);
+  const keysIn = [...st.main, ...st.extra].filter(r => countKey(short, r.key) > 0).length;
+  add('short-keys', range(keysIn, 3, 6), `Ключей в коротком: ${keysIn} (нужно 3–6; частичные совпадения не считаются)`);
+  const rep = density(short).rows.filter(r => !r.stop);
+  const mw = lemma((st.mainWord || '').toLowerCase());
+  const over = rep.filter(r => r.word === mw ? r.count > 3 : r.count > 2);
+  const mwCount = (rep.find(r => r.word === mw) || {}).count || 0;
+  add('short-repeats', over.length ? 'bad' : mwCount === 3 ? 'warn' : 'ok',
+    over.length ? `Повторы в коротком: ${over.map(r => r.word + '×' + r.count).join(', ')}`
+      : `Повторы в коротком в норме (${mw || 'главное слово'}×${mwCount})`);
+
+  add('full-len', len(full) <= 4500 ? 'ok' : len(full) <= 4700 ? 'warn' : 'bad', `Полное: ${len(full)}/4500 символов`);
+  const tm = tableTotals(st, st.main), te = tableTotals(st, st.extra);
+  add('main-sum', range(tm.sumFull, 15, 20), `Main в полном: ${tm.sumFull} вхождений (15–20)`);
+  add('extra-sum', range(te.sumFull, 15, 20), `Extra в полном: ${te.sumFull} вхождений (15–20)`);
+  const ns = nameKeyStats(st);
+  add('namekey-total', range(ns.totalFull, 15, 20), `Главный ключ в полном: ${ns.totalFull} (15–20)`);
+  add('namekey-standalone', range(ns.standalone, 7, 10), `Главный ключ отдельно: ${ns.standalone} (7–10)`);
+  add('namekey-lower', range(ns.lowercase, 0.4, 0.6), `Главный ключ строчными: ${Math.round(ns.lowercase * 100)}% (~50%)`);
+  const q = (full.match(/["“”]/g) || []).length;
+  add('quotes', q ? 'bad' : 'ok', `Кавычек в полном: ${q}`);
+  const all = listing(st).toLowerCase();
+  const banned = ['best', 'free', 'premium', 'recommended'].filter(w => new RegExp(`\\b${w}\\b`).test(all))
+    .concat(all.includes('#1') ? ['#1'] : []);
+  add('banned', banned.length ? 'bad' : 'ok', banned.length ? `Запрещённые слова: ${banned.join(', ')}` : 'Запрещённых слов нет');
+  const seg = new Intl.Segmenter();
+  const multi = full.split('\n').filter(l => [...seg.segment(l)].filter(x => /\p{Extended_Pictographic}/u.test(x.segment)).length > 1);
+  const noSpace = (full.match(/(\p{Extended_Pictographic}|⃣)️?(?=[A-Za-z0-9])/gu) || []).length;
+  add('emoji', multi.length || noSpace ? 'bad' : 'ok', multi.length || noSpace
+    ? `Эмодзи: строк с 2+ эмодзи ${multi.length}${multi[0] ? ' (' + multi[0].slice(0, 40) + '…)' : ''}, без пробела после ${noSpace}`
+    : 'Эмодзи: по одному в строке, с пробелом');
+  const bl = blocks(full), types = new Set(bl.map(listType).filter(Boolean));
+  add('lists', types.size >= 5 ? 'ok' : 'warn', `Типов списков: ${types.size} (${[...types].join(' ')}) — нужно 5+`);
+  const long = bl.filter(b => !listType(b) && b.length > 400);
+  long.forEach(b => add('long-para', 'warn', `Длинный абзац (${b.length}): ${b.slice(0, 50)}…`));
+  if (!long.length) add('long-para', 'ok', 'Абзацев длиннее 400 нет');
+  add('blocks', bl.length >= 10 ? 'ok' : 'warn', `Блоков: ${bl.length} (нужно 10+)`);
+  const nkWords = [...new Set(nk.split(/\s+/).filter(Boolean))];
+  let rep3 = 0;
+  bl.forEach(b => nkWords.forEach(w => {
+    const n = (b.toLowerCase().match(new RegExp(`(?<![a-z])${escapeRe(w)}(?![a-z.])`, 'g')) || []).length;
+    if (n >= 3) { rep3++; add('block-repeat', 'warn', `«${w}» ×${n} в блоке: ${b.split('\n')[0].slice(0, 50)}`); }
+  }));
+  if (!rep3) add('block-repeat', 'ok', 'Нет блоков с 3+ словами главного ключа');
+  const d = density(listing(st)), red = d.rows.filter(r => r.level === 'bad');
+  const tolerable = red.every(r => nkWords.includes(r.word) && r.count - Math.floor(0.0299 * d.words) <= 2);
+  add('density', !red.length ? 'ok' : tolerable ? 'warn' : 'bad', !red.length ? 'Плотность: слов ≥3% нет'
+    : `Плотность ≥3%: ${red.map(r => `${r.word} ${(r.pct * 100).toFixed(2)}%`).join(', ')}${tolerable ? ' — допустимо (слово названия, +1–2)' : ''}`);
+  return out;
+}
+function parseCSV(text) {
+  text = String(text).replace(/^﻿/, '');
+  const head = text.split(/\r?\n/)[0];
+  const sep = [',', ';', '\t'].sort((a, b) => head.split(b).length - head.split(a).length)[0];
+  const rows = [[]];
+  let cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === sep) { rows[rows.length - 1].push(cell); cell = ''; }
+    else if (c === '\n') { rows[rows.length - 1].push(cell.replace(/\r$/, '')); cell = ''; rows.push([]); }
+    else cell += c;
+  }
+  rows[rows.length - 1].push(cell);
+  const h = rows.shift().map(x => x.trim().toLowerCase());
+  const ki = h.findIndex(x => x.includes('keyword')), vi = h.findIndex(x => x.includes('volume')),
+        di = h.findIndex(x => x === 'kd' || x.includes('kd%') || x.includes('difficulty'));
+  if (ki < 0) throw new Error('В CSV нет столбца Keyword');
+  return rows.map(r => ({ key: (r[ki] || '').trim(), volume: (r[vi] || '').trim(), kd: (r[di] || '').trim() }))
+    .filter(r => r.key);
+}
+function parseTSV(text) {
+  return String(text).replace(/\r/g, '').split('\n').filter(l => l.trim()).map(l => l.split('\t').map(c => c.trim()));
+}
+function tidy(text) {
+  return normalize(text).split('\n')
+    .map(l => l.replace(/[ \t\u00A0]+/g, ' ').trim().replace(/ +([,.!?;:])/g, '$1')).join('\n').trim();
+}
+function esc(t) { return t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+function markup(text, st, highlight) {
+  text = normalize(text);
+  const cls = new Array(text.length).fill(''), nk = new Array(text.length).fill(false);
+  const paint = (keys, c) => keys.forEach(k => findKey(text, k).forEach(([a, b]) => {
+    for (let i = a; i < b; i++) cls[i] = c;
+  }));
+  paint(st.extra.map(r => r.key), 'k-extra');
+  paint(st.main.map(r => r.key), 'k-main');          // main wins over extra
+  paint([...highlight], 'k-hl');                      // clicked keys win over all
+  findKey(text, st.nameKey).forEach(([a, b]) => { for (let i = a; i < b; i++) nk[i] = true; });
+  let html = '';
+  for (let i = 0; i < text.length;) {
+    let j = i;
+    while (j < text.length && cls[j] === cls[i] && nk[j] === nk[i]) j++;
+    const c = [cls[i], nk[i] && cls[i] !== 'k-hl' ? 'k-nk' : ''].filter(Boolean).join(' ');
+    html += c ? `<mark class="${c}">${esc(text.slice(i, j))}</mark>` : esc(text.slice(i, j));
+    i = j;
+  }
+  return text.endsWith('\n') ? html + ' ' : html;
+}
+function slug(name) {
+  return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'listing';
+}
+function toMarkdown(st) {
+  const cell = v => String(v || '').replace(/\|/g, '\\|');
+  const table = (title, rows) => {
+    const lines = [`## ${title} keywords`, '', `| # | ${title} Keyword | Volume | KD | Times used |`, '|---|---|---|---|---|'];
+    rows.forEach((r, i) => lines.push(`| ${i + 1} | ${cell(r.key)} | ${cell(r.volume)} | ${cell(r.kd)} | ${keyUsage(st, r.key).total} |`));
+    lines.push(`| | Итого | | | ${tableTotals(st, rows).sum} |`);
+    return lines.join('\n');
+  };
+  const ns = nameKeyStats(st), d = density(listing(st));
+  const issues = runChecks(st).filter(c => c.status !== 'ok');
+  return [
+    `# ${tidy(st.name) || 'Без названия'}`, '',
+    '## Короткое описание', '', '```text', tidy(st.short), '```', '',
+    '## Полное описание', '', '```text', tidy(st.full), '```', '',
+    table('Main', st.main), '', table('Extra', st.extra), '',
+    '## Сводка', '',
+    `- Главный ключ «${st.nameKey}»: всего ${ns.total} (полн. ${ns.totalFull}) · отдельно ${ns.standalone} · lowercase ${Math.round(ns.lowercase * 100)}%`,
+    `- Длины: название ${[...tidy(st.name)].length}, короткое ${[...tidy(st.short)].length}, полное ${[...tidy(st.full)].length}`,
+    `- Плотность (топ-5 из ${d.words} слов): ` + d.rows.filter(r => !r.stop).slice(0, 5)
+      .map(r => `${r.word} ${r.count} (${(r.pct * 100).toFixed(2)}%)`).join(', '),
+    ...issues.map(c => `- ${c.status === 'bad' ? '✕' : '▲'} ${c.text}`), '',
+  ].join('\n');
+}
+</script>
+<script>
+const LS = 'cws-text-builder-v1';
+const $ = id => document.getElementById(id);
+const empty = () => ({ name: '', short: '', full: '', nameKey: '', nameKeyManual: false, mainWord: '', main: [], extra: [] });
+let state = empty();
+try {
+  const saved = JSON.parse(localStorage.getItem(LS));
+  if (saved && Array.isArray(saved.main) && Array.isArray(saved.extra)) state = { ...empty(), ...saved };
+} catch (e) { /* corrupt storage → empty state */ }
+const highlight = new Set();
+
+function renderTable(which) {
+  const tb = $(which);
+  tb.innerHTML = '';
+  state[which].forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="idx n">${i + 1}</td><td class="key"><div data-f="key" contenteditable="plaintext-only" spellcheck="false"></div></td>
+      <td class="num"><input data-f="volume"></td><td class="num"><input data-f="kd"></td>
+      <td class="used n"></td><td><button title="Удалить строку">×</button></td>`;
+    tr.querySelectorAll('[data-f]').forEach(el => {
+      const prop = el.tagName === 'INPUT' ? 'value' : 'textContent';
+      el[prop] = r[el.dataset.f];
+      el.oninput = () => { r[el.dataset.f] = el[prop].replace(/\n/g, ' '); schedule(); };
+    });
+    tr.querySelector('[data-f=key]').onpaste = e => pasteRows(e, which, i);
+    tr.querySelector('[data-f=key]').onkeydown = e => { if (e.key === 'Enter') e.preventDefault(); };
+    tr.querySelector('button').onclick = () => { state[which].splice(i, 1); renderTable(which); schedule(); };
+    tr.querySelectorAll('.idx,.used').forEach(td => td.onclick = () => {
+      const k = r.key.trim().toLowerCase();
+      if (!k) return;
+      highlight.has(k) ? highlight.delete(k) : highlight.add(k);
+      recalc();
+    });
+    tb.appendChild(tr);
+  });
+}
+
+function pasteRows(e, which, start) {
+  const text = e.clipboardData.getData('text');
+  if (!/[\t\n]/.test(text.trim())) return;
+  e.preventDefault();
+  parseTSV(text).forEach((cells, j) => {
+    if (cells.length > 1 && /^\d+$/.test(cells[0])) cells = cells.slice(1);
+    state[which][start + j] = { key: cells[0] || '', volume: cells[1] || '', kd: cells[2] || '' };
+  });
+  renderTable(which); schedule();
+}
+
+function recalc() {
+  if (!state.nameKeyManual) state.nameKey = state.name.trim().toLowerCase();
+  if ($('nameKey') !== document.activeElement) $('nameKey').value = state.nameKey;
+  const words = state.nameKey.split(/\s+/).filter(Boolean);
+  if (!words.includes(state.mainWord)) state.mainWord = words[words.length - 1] || '';
+  $('mainWord').innerHTML = words.map(w => `<option${w === state.mainWord ? ' selected' : ''}>${esc(w)}</option>`).join('');
+
+  const ns = nameKeyStats(state);
+  $('nkTotal').textContent = `${ns.total} · ${ns.totalFull}`;
+  $('nkStand').textContent = ns.standalone;
+  $('nkInside').textContent = ns.inside;
+  $('nkLower').textContent = Math.round(ns.lowercase * 100) + '%';
+
+  const nk = state.nameKey.trim().toLowerCase();
+  for (const which of ['main', 'extra']) {
+    [...$(which).rows].forEach((tr, i) => {
+      const r = state[which][i], u = keyUsage(state, r.key), k = r.key.trim().toLowerCase();
+      const cell = tr.querySelector('.used');
+      cell.textContent = u.total;
+      cell.title = `название ${u.name} · короткое ${u.short} · полное ${u.full}`;
+      tr.classList.toggle('zero', u.total === 0);
+      tr.classList.toggle('namekey', !!k && k === nk);
+      tr.classList.toggle('hl', highlight.has(k));
+    });
+    const t = tableTotals(state, state[which]);
+    $(which + 'Sum').textContent = `строк ${t.used}/${t.rows} · вхождений ${t.sum} (полн. ${t.sumFull})`;
+  }
+
+  const len = t => [...normalize(t).trim()].length;
+  $('nameLen').textContent = len(state.name);
+  $('shortLen').textContent = len(state.short) + ' / 132';
+  $('fullLen').textContent = len(state.full) + ' / 4500';
+
+  const text = normalize(listing(state));
+  FIELDS.forEach(paint);
+
+  const icon = { ok: '✓', warn: '▲', bad: '✕' };
+  $('checks').innerHTML = runChecks(state).map(c => `<li class="${c.status}"><span>${icon[c.status]}</span><span>${esc(c.text)}</span></li>`).join('');
+
+  const d = density(text);
+  $('dSum').textContent = `слов ${d.words} · символов ${[...text].length}`;
+  $('dens').innerHTML = d.rows.slice(0, 30).map(r =>
+    `<tr class="${r.stop ? 'd-stop' : r.level ? 'd-' + r.level : ''}"><td>${esc(r.word)}</td><td class="n">${(r.pct * 100).toFixed(2)}%</td><td class="n">${r.count}</td></tr>`).join('');
+
+  try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) { /* storage full/blocked */ }
+}
+
+let timer;
+const FIELDS = ['name', 'short', 'full'];
+// Overlay highlight: transparent textarea over a backdrop with the same text and <mark>s.
+function paint(id) { $(id + 'Bd').innerHTML = markup(state[id], state, highlight); }
+function grow(id) { const el = $(id); el.style.height = 'auto'; el.style.height = el.scrollHeight + 2 + 'px'; }
+function schedule() { clearTimeout(timer); timer = setTimeout(recalc, 150); }
+
+for (const id of FIELDS) {
+  $(id).value = state[id];
+  $(id).oninput = () => {
+    if (id === 'name' && /\n/.test($(id).value)) $(id).value = $(id).value.replace(/\n+/g, ' ');
+    state[id] = $(id).value; grow(id); paint(id); schedule();
+  };
+}
+$('name').onkeydown = e => { if (e.key === 'Enter') e.preventDefault(); };
+addEventListener('resize', () => FIELDS.forEach(grow));
+$('nameKey').oninput = () => { state.nameKey = $('nameKey').value; state.nameKeyManual = !!state.nameKey.trim(); schedule(); };
+$('mainWord').onchange = () => { state.mainWord = $('mainWord').value; recalc(); };
+document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
+  state[b.dataset.add].push({ key: '', volume: '', kd: '' });
+  renderTable(b.dataset.add);
+  $(b.dataset.add).lastElementChild.querySelector('[data-f]').focus();
+  recalc();
+});
+
+let importTo;
+function showError(msg) { $('err').textContent = msg; setTimeout(() => $('err').textContent = '', 5000); }
+document.querySelectorAll('[data-import]').forEach(b => b.onclick = () => { importTo = b.dataset.import; $('file').click(); });
+$('file').onchange = () => {
+  const f = $('file').files[0];
+  if (!f) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    try { state[importTo] = parseCSV(fr.result); renderTable(importTo); recalc(); }
+    catch (e) { showError(e.message); }
+    $('file').value = '';
+  };
+  fr.readAsText(f, 'utf-8');
+};
+
+$('clear').onclick = function ask() {
+  $('clearBox').innerHTML = 'Точно очистить? <button class="btn" id="yes">Да</button> <button class="btn" id="no">Нет</button>';
+  const back = () => { $('clearBox').innerHTML = '<button class="btn" id="clear">Очистить</button>'; $('clear').onclick = ask; };
+  $('no').onclick = back;
+  $('yes').onclick = () => {
+    state = empty(); highlight.clear();
+    for (const id of FIELDS) { $(id).value = ''; grow(id); }
+    renderTable('main'); renderTable('extra'); recalc(); back();
+  };
+};
+
+$('save').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + toMarkdown(state)], { type: 'text/markdown;charset=utf-8' }));
+  a.download = slug(state.name) + '-listing.md';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+
+renderTable('main'); renderTable('extra'); FIELDS.forEach(grow); recalc();
+</script>
+</body>
+</html>
