@@ -343,12 +343,13 @@ function toMarkdown(st) {
   ].join('\n');
 }
 function toReportHTML(st) {
-  const td = v => `<td>${esc(String(v ?? ''))}</td>`;
-  const tr = cells => `<tr>${cells.map(td).join('')}</tr>`;
-  const table = (head, rows) => `<table border="1" cellpadding="4" style="border-collapse:collapse">`
-    + `<tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr>${rows.join('')}</table>`;
+  // Google Docs pastes columns at equal width unless the header cells carry one; numbers from column 3 on are centered
+  const tr = cells => `<tr>${cells.map((v, i) => `<td${i > 1 ? ' style="text-align:center"' : ''}>${esc(String(v ?? ''))}</td>`).join('')}</tr>`;
+  const table = (head, rows, widths = []) => `<table border="1" cellpadding="4" style="border-collapse:collapse">`
+    + `<tr>${head.map((h, i) => `<th${widths[i] ? ` style="width:${widths[i]}pt"` : ''}>${esc(h)}</th>`).join('')}</tr>${rows.join('')}</table>`;
   const keys = (title, rows) => `<h2>${title} keywords</h2>` + table(['#', title + ' Keyword', 'Volume', 'KD', 'Times used'],
-    [...rows.map((r, i) => tr([i + 1, r.key, r.volume, r.kd, keyUsage(st, r.key).total])), tr(['', 'Итого', '', '', tableTotals(st, rows).sum])]);
+    [...rows.map((r, i) => tr([i + 1, r.key, r.volume, r.kd, keyUsage(st, r.key).total])), tr(['', 'Итого', '', '', tableTotals(st, rows).sum])],
+    [28, 250, 64, 50, 76]);
   const text = (title, t) => `<h2>${title}</h2>` + tidy(t).split('\n').map(l => `<p>${esc(l) || '&nbsp;'}</p>`).join('');
   const ns = nameKeyStats(st), d = density(listing(st));
   const color = r => r.stop ? 'color:#888' : r.pct >= 0.03 ? 'background:#f4c7c3' : r.pct >= 0.02 ? 'background:#fce8b2' : '';
