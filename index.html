@@ -103,7 +103,7 @@ select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--
       <input id="nameKey" spellcheck="false">
       <div class="stats">
         <div class="stat"><b id="nkTotal">0</b><span>всего · полн.</span></div>
-        <div class="stat"><b id="nkStand">0</b><span>отдельно (7–10)</span></div>
+        <div class="stat"><b id="nkStand">0</b><span>отдельно (8–10)</span></div>
         <div class="stat"><b id="nkInside">0</b><span>внутри длинных</span></div>
         <div class="stat"><b id="nkLower">0%</b><span>lowercase (~50%)</span></div>
       </div>
@@ -226,7 +226,14 @@ function runChecks(st) {
   add('extra-sum', range(te.sumFull, 15, 20), `Extra в полном: ${te.sumFull} вхождений (15–20)`);
   const ns = nameKeyStats(st);
   add('namekey-total', range(ns.totalFull, 15, 20), `Главный ключ в полном: ${ns.totalFull} (15–20)`);
-  add('namekey-standalone', range(ns.standalone, 7, 10), `Главный ключ отдельно: ${ns.standalone} (7–10)`);
+  add('namekey-standalone', range(ns.standalone, 8, 10), `Главный ключ отдельно: ${ns.standalone} (8–10)`);
+  const toLemmas = t => (normalize(t).toLowerCase().match(/[a-z0-9']+/g) || []).map(lemma);
+  const nkLemmas = toLemmas(nk);
+  // ponytail: word overlap is a proxy for "not broader than the name key"; meaning is still the user's call
+  const wide = nk ? st.extra.map(r => r.key).filter(k => k.trim() && !toLemmas(k).some(w => nkLemmas.includes(w))) : [];
+  add('extra-width', wide.length ? 'warn' : 'ok', wide.length
+    ? `Проверьте ширину Extra (нет слов главного ключа, могут быть шире по смыслу): ${wide.join(', ')}`
+    : 'Extra не шире главного ключа (по словам)');
   add('namekey-lower', range(ns.lowercase, 0.4, 0.6), `Главный ключ строчными: ${Math.round(ns.lowercase * 100)}% (~50%)`);
   const q = (full.match(/["“”]/g) || []).length;
   add('quotes', q ? 'bad' : 'ok', `Кавычек в полном: ${q}`);
