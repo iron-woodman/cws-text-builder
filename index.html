@@ -26,9 +26,10 @@ header h1{font-size:18px;margin:0 auto 0 0}
 .panel h2 small{font-weight:400;color:var(--muted);font-size:12px}
 .tw{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-th{background:var(--head);color:var(--head-fg);font-weight:500;text-align:left;padding:5px 6px;white-space:nowrap}
+th{background:var(--head);color:var(--head-fg);font-weight:500;text-align:center;padding:5px 6px;white-space:nowrap}
 td{border-bottom:1px solid var(--line);padding:4px 6px}
-td.n{text-align:right}
+td.n,td.num{text-align:center}
+table:not(.dens) th:nth-child(2),.dens th:first-child{text-align:left}
 tr.namekey td{color:var(--key);font-weight:600}
 tr.zero td:last-child{color:var(--muted)}
 td input{width:100%;border:0;background:transparent;color:inherit;font:inherit}
@@ -66,7 +67,7 @@ th{white-space:normal}
 td.key{white-space:normal;overflow-wrap:anywhere}
 td.key [data-f]{display:block;min-height:1.3em;outline:none}
 .panel{align-content:start}
-td.num input{width:4.5em;text-align:right}
+td.num input{width:4.5em;text-align:center}
 td.idx,td.used{cursor:pointer;user-select:none}
 tr.hl td{background:var(--hl)}
 tr.zero td{color:var(--muted)}
