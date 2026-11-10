@@ -174,13 +174,15 @@ var STOPWORDS = new Set(('the a an and or but to in of for on at by with from as
 function lemma(w) { return w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w; }
 function density(text) {
   const words = (normalize(text).toLowerCase().match(/[a-z0-9']+/g) || []).map(lemma);
+  // textchecker.online shows all words but takes % over words that are not pure numbers
+  const base = words.filter(w => !/^\d+$/.test(w)).length;
   const counts = new Map();
   words.forEach(w => counts.set(w, (counts.get(w) || 0) + 1));
   const rows = [...counts].map(([word, count]) => {
-    const pct = count / words.length, stop = STOPWORDS.has(word) || /^\d+$/.test(word);
+    const pct = count / (base || words.length), stop = STOPWORDS.has(word) || /^\d+$/.test(word);
     return { word, count, pct, stop, level: stop ? '' : pct >= 0.03 ? 'bad' : pct >= 0.02 ? 'warn' : '' };
   }).sort((a, b) => b.count - a.count || a.word.localeCompare(b.word));
-  return { words: words.length, rows };
+  return { words: words.length, base, rows };
 }
 function blocks(full) { return normalize(full).split(/\n\s*\n/).filter(b => b.trim()); }
 function lineMarker(line) {
@@ -262,7 +264,7 @@ function runChecks(st) {
   }));
   if (!rep3) add('block-repeat', 'ok', 'Нет блоков с 3+ словами главного ключа');
   const d = density(listing(st)), red = d.rows.filter(r => r.level === 'bad');
-  const tolerable = red.every(r => nkWords.includes(r.word) && r.count - Math.floor(0.0299 * d.words) <= 2);
+  const tolerable = red.every(r => nkWords.includes(r.word) && r.count - Math.floor(0.0299 * d.base) <= 2);
   add('density', !red.length ? 'ok' : tolerable ? 'warn' : 'bad', !red.length ? 'Плотность: слов ≥3% нет'
     : `Плотность ≥3%: ${red.map(r => `${r.word} ${(r.pct * 100).toFixed(2)}%`).join(', ')}${tolerable ? ' — допустимо (слово названия, +1–2)' : ''}`);
   return out;
