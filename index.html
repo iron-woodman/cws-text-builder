@@ -345,9 +345,12 @@ function toMarkdown(st) {
 }
 function toReportHTML(st) {
   // Google Docs pastes columns at equal width unless the header cells carry one; numbers from column 3 on are centered
-  const tr = cells => `<tr>${cells.map((v, i) => `<td${i > 1 ? ' style="text-align:center"' : ''}>${esc(String(v ?? ''))}</td>`).join('')}</tr>`;
-  const table = (head, rows, widths = []) => `<table border="1" cellpadding="4" style="border-collapse:collapse">`
-    + `<tr>${head.map((h, i) => `<th${widths[i] ? ` style="width:${widths[i]}pt"` : ''}>${esc(h)}</th>`).join('')}</tr>${rows.join('')}</table>`;
+  // compact rows: Docs keeps cell padding and line-height from inline styles
+  const P = 'padding:1pt 4pt;line-height:1';
+  const td = (v, center) => `<td style="${P}${center ? ';text-align:center' : ''}">${esc(String(v ?? ''))}</td>`;
+  const tr = (cells, from = 2, style = '') => `<tr${style ? ` style="${style}"` : ''}>${cells.map((v, i) => td(v, i >= from)).join('')}</tr>`;
+  const table = (head, rows, widths = []) => `<table border="1" cellpadding="0" style="border-collapse:collapse">`
+    + `<tr>${head.map((h, i) => `<th style="${P}${widths[i] ? `;width:${widths[i]}pt` : ''}">${esc(h)}</th>`).join('')}</tr>${rows.join('')}</table>`;
   const keys = (title, rows) => `<h2>${title} keywords</h2>` + table(['#', title + ' Keyword', 'Volume', 'KD', 'Times used'],
     [...rows.map((r, i) => tr([i + 1, r.key, r.volume, r.kd, keyUsage(st, r.key).total])), tr(['', 'Итого', '', '', tableTotals(st, rows).sum])],
     [28, 250, 64, 50, 76]);
@@ -361,7 +364,7 @@ function toReportHTML(st) {
     + `<p>Главный ключ «${esc(st.nameKey)}»: всего ${ns.total} (полн. ${ns.totalFull}) · отдельно ${ns.standalone} · lowercase ${Math.round(ns.lowercase * 100)}%</p>`
     + `<p>Слов ${d.words} · длины: название ${[...tidy(st.name)].length}, короткое ${[...tidy(st.short)].length}, полное ${[...tidy(st.full)].length}</p>`
     + table(['Слово', 'Плотность', 'Кол-во'], d.rows.slice(0, 30).map(r =>
-      `<tr style="${color(r)}"><td>${esc(r.word)}</td><td>${(r.pct * 100).toFixed(2)}%</td><td>${r.count}</td></tr>`))
+      tr([r.word, (r.pct * 100).toFixed(2) + '%', r.count], 1, color(r))), [170, 80, 70])
     + (issues.length ? '<ul>' + issues.map(c => `<li>${c.status === 'bad' ? '✕' : '▲'} ${esc(c.text)}</li>`).join('') + '</ul>' : '<p>✓ Все проверки пройдены</p>');
 }
 </script>
