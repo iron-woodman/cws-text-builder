@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Требования к описаниям CWS</title>
+<style>
+:root{--bg:#f3f5f4;--panel:#fff;--fg:#1d2422;--muted:#66726e;--line:#d9e0dd;--head:#2f6b55;--head-fg:#fff;--ok:#2f8a3e;--warn:#b58300;--bad:#c23b2e;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151a19;--panel:#1e2523;--fg:#e4ebe8;--muted:#93a19c;--line:#33403c;--head:#2a5c4a;--ok:#6cc77a;--warn:#e0b341;--bad:#ef7a6e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151a19;--panel:#1e2523;--fg:#e4ebe8;--muted:#93a19c;--line:#33403c;--head:#2a5c4a;--ok:#6cc77a;--warn:#e0b341;--bad:#ef7a6e;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 var(--sans)}
+main{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0 0 4px}
+h2{font-size:16px;margin:28px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--head)}
+p{margin:6px 0}
+.muted{color:var(--muted)}
+a{color:var(--head)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) a{color:var(--ok)}}
+nav{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 0;font-size:13px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--panel);font-size:13px}
+th{background:var(--head);color:var(--head-fg);font-weight:500;text-align:left;padding:6px 8px}
+td{border-bottom:1px solid var(--line);padding:6px 8px;vertical-align:top}
+td:nth-child(2){white-space:nowrap;font-weight:600}
+td:last-child{white-space:nowrap;color:var(--muted)}
+code{font-family:var(--mono);font-size:12px;background:color-mix(in srgb,var(--line) 60%,transparent);padding:0 3px;border-radius:3px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+ul{margin:6px 0;padding-left:20px}
+.note{background:var(--panel);border-left:3px solid var(--warn);padding:8px 12px;margin:10px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Требования к описаниям Chrome Web Store</h1>
+<p class="muted">Все критерии, по которым CWS Text Builder и скилл <code>cws-description</code> проверяют название, короткое и полное описание. <a href="index.html">← к приложению</a></p>
+<nav><a href="#keys">Ключи</a><a href="#common">Общие</a><a href="#short">Короткое</a><a href="#full">Полное</a><a href="#spam">Плотность</a><a href="#count">Как считается</a><a href="#flow">Порядок работы</a></nav>
+
+<p>Столбец «Проверка»: <span class="ok">✓</span> норма, <span class="warn">▲</span> предупреждение, <span class="bad">✕</span> нарушение — приложение проверяет само; <b>вручную</b> — проверяете вы.</p>
+
+<h2 id="keys">1. Ключи (до написания)</h2>
+<div class="tw"><table>
+<tr><th>Правило</th><th>Норма</th><th>Проверка</th></tr>
+<tr><td>Квота ключей из Semrush: Main = ключ из названия + его хвосты, Extra = дополнительные</td><td>15 + 15</td><td>вручную</td></tr>
+<tr><td>Extra — аналоги главного ключа: той же ширины или уже, не шире. Широкие (<code>clear chat history</code>) весят меньше</td><td>не шире</td><td><span class="warn">▲</span> если в Extra нет слов главного ключа</td></tr>
+<tr><td>Релевантность: вбейте ключ в Google — выдача должна быть похожа на ваш продукт</td><td>—</td><td>вручную</td></tr>
+<tr><td>Хвосты с названием ищите через Phrase Match и Exact Match, не только Broad Match</td><td>—</td><td>вручную</td></tr>
+<tr><td>Убрать: перестановки, которые никто не вводит; ключи других платформ (<code>… firefox</code>); функции, которых нет; хвост названия в Extra → перенести в Main</td><td>—</td><td>вручную</td></tr>
+</table></div>
+
+<h2 id="common">2. Общие правила (название, короткое, полное)</h2>
+<div class="tw"><table>
+<tr><th>Правило</th><th>Норма</th><th>Проверка</th></tr>
+<tr><td>Запрещённые слова — модерация отклоняет: <code>best</code> <code>free</code> <code>premium</code> <code>recommended</code> <code>#1</code></td><td>0</td><td><span class="bad">✕</span></td></tr>
+<tr><td>Ключи не ставить подряд и через запятую (<code>mass delete chats, erase chatgpt history</code>) — модерация считает переспамом. Разделяйте словами или точкой</td><td>0</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Общая длина: название + короткое + полное, с пробелами</td><td>4350–4650</td><td><span class="warn">▲</span> меньше, <span class="bad">✕</span> больше</td></tr>
+<tr><td>Не выдумывать функции и обещания приватности — модерация сверяет их с разрешениями</td><td>—</td><td>вручную</td></tr>
+</table></div>
+
+<h2 id="short">3. Короткое описание</h2>
+<div class="tw"><table>
+<tr><th>Правило</th><th>Норма</th><th>Проверка</th></tr>
+<tr><td>Длина</td><td>≤ 132</td><td><span class="bad">✕</span></td></tr>
+<tr><td>Главный ключ (из названия) ровно 1 раз и не первым словом: <code>Fast chatgpt bulk delete: …</code></td><td>1</td><td><span class="bad">✕</span></td></tr>
+<tr><td>Ключей всего, включая главный. Частичные совпадения засчитываются (<code>mass delete chats</code> ← <code>mass delete chatgpt chats</code>), приложение считает только точные</td><td>3–6</td><td><span class="warn">▲</span> по точным</td></tr>
+<tr><td>Главное слово названия (<code>delete</code>). Разные формы одного корня (<code>delete, deleting, deleted</code>) даже лучше трёх одинаковых</td><td>3, не больше</td><td><span class="bad">✕</span> если &gt;3</td></tr>
+<tr><td>Любое другое слово (кроме служебных)</td><td>≤ 2</td><td><span class="bad">✕</span></td></tr>
+<tr><td>Без воды, читабельно. Вопросные ключи оставьте для полного описания</td><td>—</td><td>вручную</td></tr>
+</table></div>
+
+<h2 id="full">4. Полное описание</h2>
+<div class="tw"><table>
+<tr><th>Правило</th><th>Норма</th><th>Проверка</th></tr>
+<tr><td>Вхождения ключей Main (по полному описанию)</td><td>15–20</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Вхождения ключей Extra</td><td>15–20</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Главный ключ всего (включая внутри длинных ключей)</td><td>15–20</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Главный ключ как есть — отдельно, не внутри длинного ключа</td><td>8–10</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Доля вхождений главного ключа строчными (<code>chatgpt bulk delete</code>, как ищут люди)</td><td>40–60%</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Ключи в абзаце (не в списке). В первом абзаце до спойлера «Read more» — до 3, он весит больше</td><td>≤ 3</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Слово главного ключа в одном блоке. До спойлера ≤ 2–3, ниже 1–2</td><td>&lt; 3</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Использовать большую часть строк Main и Extra: высокие, средние и низкие объёмы. Ключи — целыми фразами и как написаны</td><td>—</td><td>вручную</td></tr>
+<tr><td>Блоков (через пустую строку)</td><td>10–16+</td><td><span class="warn">▲</span> если &lt;10</td></tr>
+<tr><td>Без «простыней»: абзац 1–3 строки, не больше 3–4</td><td>≤ 400 симв.</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Списков разных типов: <code>1.</code> <code>1️⃣</code> <code>①</code> <code>▸ ➤ •</code> <code>-</code> <code>💠 ◆ 🔹</code> <code>Q:/A:</code> <code>❓/💡</code></td><td>≥ 5 типов</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Списки разные по длине пунктов между собой, но внутри одного списка пункты примерно одной длины</td><td>—</td><td>вручную</td></tr>
+<tr><td>Эмодзи в строке; после эмодзи — пробел (иначе Google может не прочитать список)</td><td>≤ 1</td><td><span class="bad">✕</span></td></tr>
+<tr><td>Одинаковые эмодзи в заголовках однотипных разделов (все вопросы FAQ — ❓), разные — у разных разделов</td><td>—</td><td>вручную</td></tr>
+<tr><td>Кавычки <code>" “ ”</code></td><td>0</td><td><span class="bad">✕</span></td></tr>
+</table></div>
+<p class="muted">Скелет: вступление с главным ключом → функции ▸ → шаги 1. 2. 3. → причины 1️⃣ → разделы с вопросными ключами → советы ➤ → безопасность • → проблема (… can't …) → FAQ ❓/💡 → кому подходит - → призыв установить с главным ключом строчными.</p>
+
+<h2 id="spam">5. Плотность (переспам)</h2>
+<div class="tw"><table>
+<tr><th>Правило</th><th>Норма</th><th>Проверка</th></tr>
+<tr><td>Плотность любого значимого слова по название + короткое + полное (как textchecker.online). Служебные слова не считаются</td><td>&lt; 3%</td><td><span class="bad">✕</span></td></tr>
+<tr><td>Исключение: слово из названия выше 3% на 1–2 вхождения — допустимо</td><td>+1–2</td><td><span class="warn">▲</span></td></tr>
+<tr><td>Снижать спам удалением вхождений, а не удлинением текста: сначала не-ключевые упоминания, потом дубли ключей, потом ключи с объёмом 20</td><td>—</td><td>вручную</td></tr>
+<tr><td>Финальная проверка: весь листинг одним текстом на textchecker.online — нет красных слов</td><td>—</td><td>вручную</td></tr>
+</table></div>
+<div class="note">Конфликт правил: если все ключи содержат слово названия (<code>chatgpt</code>), норма Extra 15–20 упирается в плотность 3%. Приоритет — плотность; Extra можно оставить ниже нормы, но ключ с наибольшим объёмом поставить в сильное место (заголовок или первые абзацы).</div>
+
+<h2 id="count">6. Как считает приложение</h2>
+<ul>
+<li><b>Times used</b> — совпадения ключа без учёта регистра, целыми словами, по всему листингу; во всплывающей подсказке разбивка по полям. Ключ внутри длинного ключа засчитывается обоим (<code>chatgpt bulk delete</code> в <code>chatgpt bulk delete extension</code>).</li>
+<li>Нормы 15–20 и 8–10 сверяются по <b>полному</b> описанию.</li>
+<li><b>Плотность</b>: слова <code>[a-z0-9']</code>, грубая лемма (<code>chats → chat</code>), процент от слов без чистых чисел — как textchecker.online.</li>
+<li><b>Ключи подряд</b>: между двумя ключами только пробел, запятая, <code>;</code>, <code>&amp;</code>, <code>and</code> или <code>or</code>. Вложенный ключ за пару не считается.</li>
+<li><b>Ключи в абзаце</b>: считаются все ключи Main и Extra, вложенные — как один; блоки-списки не проверяются.</li>
+</ul>
+
+<h2 id="flow">7. Порядок работы</h2>
+<ol>
+<li>Отобрать ключи (раздел 1), загрузить в Main и Extra.</li>
+<li>Написать короткое — 2 варианта, выбрать тот, что покрывает больше объёма ключей.</li>
+<li>Написать полное по скелету; добиться ✓ по ключам, структуре, длине.</li>
+<li>Снизить плотность до &lt; 3% удалением вхождений.</li>
+<li>Один финальный прогон на textchecker.online, затем «Копировать для Google Docs» или «Сохранить .md».</li>
+</ol>
+</main>
+</body>
+</html>
