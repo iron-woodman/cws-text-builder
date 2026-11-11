@@ -147,6 +147,11 @@ function findKey(text, key) {
   return [...normalize(text).matchAll(re)].map(m => [m.index, m.index + m[0].length]);
 }
 function countKey(text, key) { return findKey(text, key).length; }
+// key matches in text, nested ones dropped (longest wins), sorted by position
+function keySpans(text, keys) {
+  const all = keys.flatMap(k => findKey(text, k)).sort((a, b) => a[0] - b[0] || b[1] - a[1]);
+  return all.filter((s, i) => !all.some((o, j) => j !== i && o[0] <= s[0] && s[1] <= o[1] && (o[1] - o[0] > s[1] - s[0] || j < i)));
+}
 function listing(st) { return [st.name, st.short, st.full].join('\n'); }
 function keyUsage(st, key) {
   return { total: countKey(listing(st), key), name: countKey(st.name, key),
@@ -220,11 +225,22 @@ function runChecks(st) {
   const mw = lemma((st.mainWord || '').toLowerCase());
   const over = rep.filter(r => r.word === mw ? r.count > 3 : r.count > 2);
   const mwCount = (rep.find(r => r.word === mw) || {}).count || 0;
-  add('short-repeats', over.length ? 'bad' : mwCount === 3 ? 'warn' : 'ok',
+  add('short-repeats', over.length ? 'bad' : 'ok',
     over.length ? `Повторы в коротком: ${over.map(r => r.word + '×' + r.count).join(', ')}`
       : `Повторы в коротком в норме (${mw || 'главное слово'}×${mwCount})`);
 
-  add('full-len', len(full) <= 4500 ? 'ok' : len(full) <= 4700 ? 'warn' : 'bad', `Полное: ${len(full)}/4500 символов`);
+  const total = len(normalize(listing(st)));
+  add('full-len', total > 4650 ? 'bad' : total >= 4350 ? 'ok' : 'warn', `Название + короткое + полное: ${total} (4350–4650)`);
+  const keys = [...st.main, ...st.extra].map(r => r.key);
+  const adj = [short, full].flatMap(t => {
+    const sp = keySpans(t, keys);
+    return sp.slice(1).map((b, i) => [sp[i], b])
+      .filter(([a, b]) => /^[\s,;&]*(and|or)?[\s,;&]*$/i.test(t.slice(a[1], b[0]))).map(([a, b]) => t.slice(a[0], b[1]));
+  });
+  add('keys-adjacent', adj.length ? 'warn' : 'ok', adj.length ? `Ключи подряд или через запятую: ${adj.join(' | ')}` : 'Ключей подряд нет');
+  const dense = blocks(full).filter(b => !listType(b) && keySpans(b, keys).length > 3);
+  dense.forEach(b => add('para-keys', 'warn', `Ключей в абзаце ${keySpans(b, keys).length} (нужно ≤3): ${b.slice(0, 50)}…`));
+  if (!dense.length) add('para-keys', 'ok', 'Ключей в абзацах ≤3');
   const tm = tableTotals(st, st.main), te = tableTotals(st, st.extra);
   add('main-sum', range(tm.sumFull, 15, 20), `Main в полном: ${tm.sumFull} вхождений (15–20)`);
   add('extra-sum', range(te.sumFull, 15, 20), `Extra в полном: ${te.sumFull} вхождений (15–20)`);
@@ -448,7 +464,7 @@ function recalc() {
   const len = t => [...normalize(t).trim()].length;
   $('nameLen').textContent = len(state.name);
   $('shortLen').textContent = len(state.short) + ' / 132';
-  $('fullLen').textContent = len(state.full) + ' / 4500';
+  $('fullLen').textContent = `${len(state.full)} · всего ${[...normalize(listing(state))].length} / 4350–4650`;
 
   const text = normalize(listing(state));
   FIELDS.forEach(paint);
