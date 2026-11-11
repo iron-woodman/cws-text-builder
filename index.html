@@ -19,6 +19,7 @@ header{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 header h1{font-size:18px;margin:0 auto 0 0}
 .btn{border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 10px;border-radius:4px;font:inherit;cursor:pointer}
 a.btn{text-decoration:none}
+.ver{border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 8px;border-radius:4px;font:inherit;width:200px}
 .btn.primary{background:var(--head);color:var(--head-fg);border-color:var(--head)}
 .cols{display:grid;grid-template-columns:minmax(0,1.17fr) minmax(0,1.38fr) minmax(0,.63fr);gap:12px;align-items:start}
 @media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr)}}
@@ -91,6 +92,7 @@ select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--
   <button class="btn" data-import="main">Импорт CSV → Main</button>
   <button class="btn" data-import="extra">Импорт CSV → Extra</button>
   <span id="clearBox"><button class="btn" id="clear">Очистить</button></span>
+  <input id="version" class="ver" placeholder="Версия: v5 partial keys" spellcheck="false" title="Имя версии — попадёт в имя файла проекта и .md">
   <button class="btn" id="open">Открыть проект</button>
   <button class="btn" id="saveProj">Сохранить проект</button>
   <button class="btn" id="copyDoc">Копировать для Google Docs</button>
@@ -355,6 +357,10 @@ function markup(text, st, highlight) {
   }
   return text.endsWith('\n') ? html + ' ' : html;
 }
+function fileName(st, suffix) {
+  const v = String(st.version || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '');
+  return [slug(st.name), v, suffix].filter(Boolean).join('-');
+}
 function slug(name) {
   return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'listing';
 }
@@ -409,7 +415,7 @@ function toReportHTML(st) {
 <script>
 const LS = 'cws-text-builder-v1';
 const $ = id => document.getElementById(id);
-const empty = () => ({ name: '', short: '', full: '', nameKey: '', nameKeyManual: false, mainWord: '', main: [], extra: [] });
+const empty = () => ({ version: '', name: '', short: '', full: '', nameKey: '', nameKeyManual: false, mainWord: '', main: [], extra: [] });
 const valid = o => o && Array.isArray(o.main) && Array.isArray(o.extra) ? { ...empty(), ...o } : null;
 let state = empty();
 // sessionStorage = this tab's own project (survives reload); localStorage = last edited project, for new tabs
@@ -497,6 +503,7 @@ function recalc() {
   $('dens').innerHTML = d.rows.slice(0, 30).map(r =>
     `<tr class="${r.stop ? 'd-stop' : r.level ? 'd-' + r.level : ''}"><td>${esc(r.word)}</td><td class="n">${(r.pct * 100).toFixed(2)}%</td><td class="n">${r.count}</td></tr>`).join('');
 
+  document.title = [state.name, state.version].map(s => s.trim()).filter(Boolean).join(' · ') || 'CWS Text Builder';
   try { const j = JSON.stringify(state); sessionStorage.setItem(LS, j); localStorage.setItem(LS, j); } catch (e) { /* storage full/blocked */ }
 }
 
@@ -517,6 +524,8 @@ for (const id of FIELDS) {
 $('name').onkeydown = e => { if (e.key === 'Enter') e.preventDefault(); };
 addEventListener('resize', () => FIELDS.forEach(grow));
 $('nameKey').oninput = () => { state.nameKey = $('nameKey').value; state.nameKeyManual = !!state.nameKey.trim(); schedule(); };
+$('version').value = state.version;
+$('version').oninput = () => { state.version = $('version').value; schedule(); };
 $('mainWord').onchange = () => { state.mainWord = $('mainWord').value; recalc(); };
 document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
   state[b.dataset.add].push({ key: '', volume: '', kd: '' });
@@ -552,16 +561,24 @@ $('clear').onclick = function ask() {
 function load(next) {
   state = next; highlight.clear();
   for (const id of FIELDS) { $(id).value = state[id]; grow(id); }
+  $('version').value = state.version;
   renderTable('main'); renderTable('extra'); recalc();
 }
-function download(text, type, name) {
+// Chrome: save dialog (choose folder and name, remembers last folder); other browsers: Downloads
+async function download(text, type, name) {
+  if (window.showSaveFilePicker) {
+    try {
+      const w = await (await showSaveFilePicker({ id: 'cws', suggestedName: name })).createWritable();
+      await w.write(new Blob([text], { type })); await w.close(); return;
+    } catch (e) { if (e.name === 'AbortError') return; }
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text], { type }));
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
-$('save').onclick = () => download('\ufeff' + toMarkdown(state), 'text/markdown;charset=utf-8', slug(state.name) + '-listing.md');
+$('save').onclick = () => download('\ufeff' + toMarkdown(state), 'text/markdown;charset=utf-8', fileName(state, 'listing.md'));
 $('copyDoc').onclick = async () => {
   const html = toReportHTML(state);
   try {
@@ -569,7 +586,7 @@ $('copyDoc').onclick = async () => {
     showError('Отчёт скопирован — вставьте Ctrl+V в Google Docs');
   } catch (e) { showError('Браузер не дал доступ к буферу: ' + e.message); }
 };
-$('saveProj').onclick = () => download(JSON.stringify(state, null, 2), 'application/json', slug(state.name) + '-project.json');
+$('saveProj').onclick = () => download(JSON.stringify(state, null, 2), 'application/json', fileName(state, 'project.json'));
 document.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
   try { await navigator.clipboard.writeText(tidy(state[b.dataset.copy])); b.textContent = 'Скопировано'; }
   catch (e) { b.textContent = 'Нет доступа'; }
