@@ -395,7 +395,8 @@ const $ = id => document.getElementById(id);
 const empty = () => ({ name: '', short: '', full: '', nameKey: '', nameKeyManual: false, mainWord: '', main: [], extra: [] });
 const valid = o => o && Array.isArray(o.main) && Array.isArray(o.extra) ? { ...empty(), ...o } : null;
 let state = empty();
-try { state = valid(JSON.parse(localStorage.getItem(LS))) || state; } catch (e) { /* corrupt storage → empty state */ }
+// sessionStorage = this tab's own project (survives reload); localStorage = last edited project, for new tabs
+try { state = valid(JSON.parse(sessionStorage.getItem(LS) || localStorage.getItem(LS))) || state; } catch (e) { /* corrupt storage → empty state */ }
 const highlight = new Set();
 
 function renderTable(which) {
@@ -479,7 +480,7 @@ function recalc() {
   $('dens').innerHTML = d.rows.slice(0, 30).map(r =>
     `<tr class="${r.stop ? 'd-stop' : r.level ? 'd-' + r.level : ''}"><td>${esc(r.word)}</td><td class="n">${(r.pct * 100).toFixed(2)}%</td><td class="n">${r.count}</td></tr>`).join('');
 
-  try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) { /* storage full/blocked */ }
+  try { const j = JSON.stringify(state); sessionStorage.setItem(LS, j); localStorage.setItem(LS, j); } catch (e) { /* storage full/blocked */ }
 }
 
 let timer;
