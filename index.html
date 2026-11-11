@@ -149,6 +149,16 @@ function findKey(text, key) {
   return [...normalize(text).matchAll(re)].map(m => [m.index, m.index + m[0].length]);
 }
 function countKey(text, key) { return findKey(text, key).length; }
+// partial key: key words in order with exactly one word dropped, at least 2 words, chat/chats alike → [start, end] or null
+function partialKey(text, key) {
+  const w = (normalize(key).toLowerCase().match(/[a-z0-9']+/g) || []).map(lemma);
+  for (let i = 0; w.length >= 3 && i < w.length; i++) {
+    const re = new RegExp('(?<![a-z0-9\'])' + w.filter((_, j) => j !== i).map(x => escapeRe(x) + 's?').join('\\s+') + '(?![a-z0-9\'])', 'i');
+    const m = normalize(text).match(re);
+    if (m) return [m.index, m.index + m[0].length];
+  }
+  return null;
+}
 // key matches in text, nested ones dropped (longest wins), sorted by position
 function keySpans(text, keys) {
   const all = keys.flatMap(k => findKey(text, k)).sort((a, b) => a[0] - b[0] || b[1] - a[1]);
@@ -221,8 +231,15 @@ function runChecks(st) {
   const nkShort = countKey(short, nk), first = (findKey(short, nk)[0] || [])[0] === 0;
   add('short-namekey', nkShort === 1 && !first ? 'ok' : 'bad',
     `Главный ключ в коротком: ${nkShort} раз${first ? ', стоит первым словом' : ''} (нужно 1, не первым)`);
-  const keysIn = [...st.main, ...st.extra].filter(r => countKey(short, r.key) > 0).length;
-  add('short-keys', range(keysIn, 3, 6), `Ключей в коротком: ${keysIn} (нужно 3–6; частичные совпадения не считаются)`);
+  const allKeys = [...st.main, ...st.extra].map(r => r.key).filter(k => k.trim());
+  const exact = allKeys.filter(k => countKey(short, k) > 0), taken = exact.flatMap(k => findKey(short, k));
+  const partial = [];
+  allKeys.filter(k => !exact.includes(k)).forEach(k => {
+    const m = partialKey(short, k);
+    if (m && !taken.some(([a, b]) => m[0] < b && a < m[1])) { taken.push(m); partial.push(`${k} ← «${short.slice(m[0], m[1])}»`); }
+  });
+  const keysIn = exact.length + partial.length;
+  add('short-keys', range(keysIn, 3, 6), `Ключей в коротком: ${keysIn} (точных ${exact.length} + частичных ${partial.length}${partial.length ? ': ' + partial.join(', ') : ''}) — нужно 3–6`);
   const rep = density(short).rows.filter(r => !r.stop);
   const mw = lemma((st.mainWord || '').toLowerCase());
   const over = rep.filter(r => r.word === mw ? r.count > 3 : r.count > 2);

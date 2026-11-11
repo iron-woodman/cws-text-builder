@@ -62,7 +62,7 @@ ul{margin:6px 0;padding-left:20px}
 <tr><th>Правило</th><th>Норма</th><th>Проверка</th></tr>
 <tr><td>Длина</td><td>≤ 132</td><td><span class="bad">✕</span></td></tr>
 <tr><td>Главный ключ (из названия) ровно 1 раз и не первым словом: <code>Fast chatgpt bulk delete: …</code></td><td>1</td><td><span class="bad">✕</span></td></tr>
-<tr><td>Ключей всего, включая главный. Частичные совпадения засчитываются (<code>mass delete chats</code> ← <code>mass delete chatgpt chats</code>), приложение считает только точные</td><td>3–6</td><td><span class="warn">▲</span> по точным</td></tr>
+<tr><td>Ключей всего, включая главный. Частичные совпадения засчитываются (<code>mass delete chats</code> ← <code>mass delete chatgpt chats</code>). Приложение считает частичным фрагмент, где слова ключа идут подряд и выброшено ровно одно (минимум 2 слова; <code>chat/chats</code> — одно слово). Только для короткого: в полном ключи пишутся целиком</td><td>3–6</td><td><span class="warn">▲</span></td></tr>
 <tr><td>Главное слово названия (<code>delete</code>). Разные формы одного корня (<code>delete, deleting, deleted</code>) даже лучше трёх одинаковых</td><td>3, не больше</td><td><span class="bad">✕</span> если &gt;3</td></tr>
 <tr><td>Любое другое слово (кроме служебных)</td><td>≤ 2</td><td><span class="bad">✕</span></td></tr>
 <tr><td>Без воды, читабельно. Вопросные ключи оставьте для полного описания</td><td>—</td><td>вручную</td></tr>
