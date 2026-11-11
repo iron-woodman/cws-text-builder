@@ -19,7 +19,7 @@ header{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 header h1{font-size:18px;margin:0 auto 0 0}
 .btn{border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 10px;border-radius:4px;font:inherit;cursor:pointer}
 a.btn{text-decoration:none}
-.ver{border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 8px;border-radius:4px;font:inherit;width:200px}
+.ver{border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 8px;border-radius:4px;font:inherit;width:110px}
 .btn.primary{background:var(--head);color:var(--head-fg);border-color:var(--head)}
 .cols{display:grid;grid-template-columns:minmax(0,1.17fr) minmax(0,1.38fr) minmax(0,.63fr);gap:12px;align-items:start}
 @media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr)}}
@@ -89,13 +89,13 @@ select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--
 <header>
   <h1>CWS Text Builder</h1>
   <a class="btn" href="manual.html" target="_blank">Требования</a>
-  <button class="btn" data-import="main">Импорт CSV → Main</button>
-  <button class="btn" data-import="extra">Импорт CSV → Extra</button>
+  <button class="btn" data-import="main" title="Импорт CSV в таблицу Main">CSV → Main</button>
+  <button class="btn" data-import="extra" title="Импорт CSV в таблицу Extra">CSV → Extra</button>
   <span id="clearBox"><button class="btn" id="clear">Очистить</button></span>
-  <input id="version" class="ver" placeholder="Версия: v5 partial keys" spellcheck="false" title="Имя версии — попадёт в имя файла проекта и .md">
+  <input id="version" class="ver" placeholder="Версия" spellcheck="false" title="Имя версии — попадёт в имя файла проекта и .md">
   <button class="btn" id="open">Открыть проект</button>
   <button class="btn" id="saveProj">Сохранить проект</button>
-  <button class="btn" id="copyDoc">Копировать для Google Docs</button>
+  <button class="btn" id="copyDoc" title="Копировать отчёт для вставки в Google Docs">В Google Docs</button>
   <button class="btn primary" id="save">Сохранить .md</button>
   <input type="file" id="file" accept=".csv,.tsv,.txt" hidden>
   <input type="file" id="projFile" accept=".json" hidden>
